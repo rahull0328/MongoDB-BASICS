@@ -15,7 +15,7 @@ db
 ### Create Or Switch Database
 
 ```js
-use acme
+use db_name
 ```
 
 ### Drop

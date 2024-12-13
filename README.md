@@ -409,3 +409,83 @@ MongoDB can use the multikey index to find documents that have 5 at any position
 <div align="right">
     <b><a href="#">↥ back to top</a></b>
 </div>
+
+## Q. How to remove attribute from MongoDB Object?
+
+**$unset:**
+
+The `$unset` operator deletes a particular field. If the field does not exist, then `$unset` does nothing. When used with `$` to match an array element, `$unset` replaces the matching element with `null` rather than removing the matching element from the array. This behavior keeps consistent the array size and element positions.
+
+syntax:
+
+```js
+{ $unset: { <field1>: "", ... } }
+```
+
+**Example:**
+
+delete the `properties.service` attribute from all records on this collection.
+
+```js
+db.collection.update(
+    {},
+    {
+        $unset : {
+            "properties.service" : 1
+        }
+    },
+    {
+        multi: true
+    }
+);
+```
+
+**To verify they have been deleted you can use:**
+
+```js
+db.collection.find(
+    {
+        "properties.service" : {
+            $exists : true
+         }
+    }
+).count(true);
+```
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is "Namespace" in MongoDB?
+
+MongoDB stores BSON (Binary Interchange and Structure Object Notation) objects in the collection. The concatenation of the collection name and database name is called a namespace
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is Replication in Mongodb?
+
+Replication exists primarily to offer data redundancy and high availability. It maintain the durability of data by keeping multiple copies or replicas of that data on physically isolated servers. Replication allows to increase data availability by creating multiple copies of data across servers. This is especially useful if a server crashes or hardware failure.
+
+With MongoDB, replication is achieved through a **Replica Set**. Writer operations are sent to the primary server (node), which applies the operations across secondary servers, replicating the data. If the primary server fails (through a crash or system failure), one of the secondary servers takes over and becomes the new primary node via election. If that server comes back online, it becomes a secondary once it fully recovers, aiding the new primary node.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is Replica Set in MongoDB?
+
+It is a group of mongo processes that maintain same data set. Replica sets provide redundancy and high availability, and are the basis for all production deployments. A replica set contains a primary node and multiple secondary nodes.
+
+The primary node receives all write operations. A replica set can have only one primary capable of confirming writes with `{ w: "majority" }` write concern; although in some circumstances, another mongod instance may transiently believe itself to also be primary.
+
+The secondaries replicate the primary\'s oplog and apply the operations to their data sets such that the secondaries\' data sets reflect the primary\'s data set. If the primary is unavailable, an eligible secondary will hold an election to elect itself the new primary.
+
+<p align="center">
+  <img src="assets/replica-set.png" alt="Replica Set" width="400px" />
+</p>
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>

@@ -489,3 +489,136 @@ The secondaries replicate the primary\'s oplog and apply the operations to their
 <div align="right">
     <b><a href="#">↥ back to top</a></b>
 </div>
+
+## Q. How does MongoDB ensure high availability?
+
+**High Availability (HA)** refers to the improvement of system and app availability by minimizing the downtime caused by routine maintenance operations (planned) and sudden system crashes (unplanned).
+
+**Replica Set:**
+
+The replica set mechanism of MongoDB has two main purposes:
+
+* One is for data redundancy for failure recovery. When the hardware fails, or the node is down for other reasons, you can use a replica for recovery.
+* The other purpose is for read-write splitting. It routes the reading requests to the replica to reduce the reading pressure on the primary node.
+
+MongoDB automatically maintains replica sets, multiple copies of data that are distributed across servers, racks and data centers. Replica sets help prevent database downtime using native replication and automatic failover.
+
+A replica set consists of multiple replica set members. At any given time, one member acts as the primary member, and the other members act as secondary members. If the primary member fails for any reason (e.g., hardware failure), one of the secondary members is automatically elected to primary and begins to process all reads and writes.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is an Embedded MongoDB Document?
+
+An embedded, or nested, MongoDB Document is a normal document that is nested inside another document within a MongoDB collection. Embedding connected data in a single document can reduce the number of read operations required to obtain data. In general, we should structure our schema so that application receives all of its required information in a single read operation.
+
+**Example:**
+
+In the normalized data model, the address documents contain a reference to the patron document.
+
+```js
+// patron document
+{
+   _id: "joe",
+   name: "Joe Bookreader"
+}
+
+// address documents
+{
+   patron_id: "joe", // reference to patron document
+   street: "123 Fake Street",
+   city: "Faketon",
+   state: "MA",
+   zip: "12345"
+}
+
+{
+   patron_id: "joe",
+   street: "1 Some Other Street",
+   city: "Boston",
+   state: "MA",
+   zip: "12345"
+}
+```
+
+Embedded documents are particularly useful when a **one-to-many** relationship exists between documents. In the example shown above, we see that a single customer has multiple addresses associated with him. The nested document structure makes it easy to retrieve complete address information about this customer with just a single query.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How can you achieve primary key - foreign key relationships in MongoDB?
+
+The primary key-foreign key relationship can be achieved by embedding one document inside the another. As an example, a department document can have its employee document(s).
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. When should we embed one document within another in MongoDB?
+
+You should consider embedding documents for:
+
+* *contains* relationships between entities
+* One-to-many relationships
+* Performance reasons
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How is data stored in MongoDB?
+
+In MongoDB, Data is stored in BSON documents (short for `Bin­ary JSON`). These documents are stored in MongoDB in JSON (JavaScript Object Notation) format. JSON documents support embedded fields, so related data and lists of data can be stored with the document instead of an external table. Documents contain one or more fields, and each field contains a value of a specific data type, including arrays, binary data and sub-documents. Documents that tend to share a similar structure are organized as collections.
+
+JSON is formatted as name/value pairs. In JSON documents, field names and values are separated by a colon, field name and value pairs are separated by commas, and sets of fields are encapsulated in "curly braces" ({}).
+
+**Example:**
+
+```js
+{
+  "name": "notebook",
+  "qty": 50,
+  "rating": [ { "score": 8 }, { "score": 9 } ],
+  "size": { "height": 11, "width": 8.5, "unit": "in" },
+  "status": "A",
+  "tags": [ "college-ruled", "perforated"]
+}
+```
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What are the differences between MongoDB and SQL-SERVER?
+
+* The MongoDB store the data in documents with JSON format but SQL store the data in Table format.
+* The MongoDB provides high performance, high availability, easy scalability etc.  rather than SQL Server.
+* In the MongoDB, we can change the structure simply by adding, removing column from the existing documents.
+
+**MongoDB and SQL Server Comparision Table:**
+
+|Base of Comparison  | MS SQL Server      | MongoDB             |
+|--------------------|--------------------|---------------------|
+|Storage Model       |RDBMS               |Document-Oriented    |
+|Joins               |Yes                 |No                   |
+|Transaction         |ACID                |Multi-document ACID Transactions with snapshot isolation |
+|Agile practices     |No                  |Yes                  |
+|Data Schema         |Fixed               |Dynamic              |
+|Scalability         |Vertical            |Horizontal           |
+|Map Reduce          |No                  |Yes                  |
+|Language            |SQL query language  |JSON Query Language  |
+|Secondary index     |Yes                 |Yes                  |
+|Triggers            |Yes                 |Yes                  |
+|Foreign Keys        |Yes                 |No                   |
+|Concurrency         |Yes                 |yes                  |
+|XML Support         |Yes                 |No                   |
+
+<p align="center">
+  <img src="assets/RDBMS_MongoDB_Mapping.jpg" alt="MongoDB & SQL Server" width="500px" />
+</p>
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>

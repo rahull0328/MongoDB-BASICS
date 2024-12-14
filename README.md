@@ -622,3 +622,320 @@ JSON is formatted as name/value pairs. In JSON documents, field names and values
 <div align="right">
     <b><a href="#">↥ back to top</a></b>
 </div>
+
+## Q. How can you achieve transaction and locking in MongoDB?
+
+In MongoDB (4.2), an operation on a single document is atomic. For situations that require atomicity of reads and writes to multiple documents (in a single or multiple collections), MongoDB supports multi-document transactions. With distributed transactions, transactions can be used across multiple operations, collections, databases, documents, and shards.
+
+MongoDB allows multiple clients to read and write the same data. In order to ensure consistency, it uses locking and other concurrency control measures to prevent multiple clients from modifying the same piece of data simultaneously.
+
+MongoDB uses **multi-granularity locking** that allows operations to lock at the global, database or collection level, and allows for individual storage engines to implement their own concurrency control below the collection level (e.g., at the document-level in WiredTiger). MongoDB uses reader-writer locks that allow concurrent readers shared access to a resource, such as a database or collection.
+
+The lock modes are represented as follows:
+
+|Lock Mode   |Description                 |
+|------------|----------------------------|
+|R           |Represents Shared (S) lock. |
+|W           |Represents Exclusive (X) lock.|
+|r           |Represents Intent Shared (IS) lock.|
+|w           |Represents Intent Exclusive (IX) lock.|
+
+**Example:**
+
+The following example highlights the key components of the transactions API
+
+```js
+const client = new MongoClient(uri);
+await client.connect();
+
+// Prereq: Create collections.
+
+await client.db('mydb1').collection('foo').insertOne({ abc: 0 }, { w: 'majority' });
+
+await client.db('mydb2').collection('bar').insertOne({ xyz: 0 }, { w: 'majority' });
+
+// Step 1: Start a Client Session
+const session = client.startSession();
+
+// Step 2: Optional. Define options to use for the transaction
+const transactionOptions = {
+  readPreference: 'primary',
+  readConcern: { level: 'local' },
+  writeConcern: { w: 'majority' }
+};
+
+// Step 3: Use withTransaction to start a transaction, execute the callback, and commit (or abort on error)
+// Note: The callback for withTransaction MUST be async and/or return a Promise.
+try {
+  await session.withTransaction(async () => {
+    const coll1 = client.db('mydb1').collection('foo');
+    const coll2 = client.db('mydb2').collection('bar');
+
+    // Important:: You must pass the session to the operations
+
+    await coll1.insertOne({ abc: 1 }, { session });
+    await coll2.insertOne({ xyz: 999 }, { session });
+  }, transactionOptions);
+} finally {
+   await session.endSession();
+   await client.close();
+}
+```
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. When to Use MongoDB Rather than MySQL?
+
+**1. MongoDB:**
+
+MongoDB is one of the most popular document-oriented databases under the banner of NoSQL database. It employs the format of key-value pairs, here called document store. Document stores in MongoDB are created is stored in BSON files which are, in fact, a little-modified version of JSON files and hence all JS are supported.
+
+It offers greater efficiency and reliability which in turn can meet your storage capacity and speed demands. The schema-free implementation of MongoDB eliminates the prerequisites of defining a fixed structure. These models allow hierarchical relationships representation and facilitate the ability to change the structure of the record.
+
+**Pros:**
+
+* MongoDB has a lower latency per query & spends less CPU time per query because it is doing a lot less work (e.g. no joins, transactions). As a result, it can handle a higher load in terms of queries per second.
+* MongoDB is easier to shard (use in a cluster) because it doesn\'t have to worry about transactions and consistency.
+* MongoDB has a faster write speed because it does not have to worry about transactions or rollbacks (and thus does not have to worry about locking).
+* It supports many Features like automatic repair, easier data distribution, and simpler data models make administration and tuning requirements lesser in NoSQL.
+* NoSQL databases are cheap and open source.
+* NoSQL database support caching in system memory so it increases data output performance.
+
+**Cons:**
+
+* MongoDB does not support transactions.
+* In general, MongoDB creates more work (e.g. more CPU cost) for the client server. For example, to join data one has to issue multiple queries and do the join on the client.
+* No Stored Procedures in mongo dB (NoSQL database).
+
+**Reasons to Use a NoSQL Database:**
+
+* **Storing large volumes of data without structure**: A NoSQL database doesn\'t limit storable data types. Plus, you can add new types as business needs change.
+* **Using cloud computing and storage**: Cloud-based storage is a great solution, but it requires data to be easily spread across multiple servers for scaling. Using affordable hardware on-site for testing and then for production in the cloud is what NoSQL databases are designed for.
+* **Rapid development**: If you are developing using modern agile methodologies, a relational database will slow you down. A NoSQL database doesn\'t require the level of preparation typically needed for relational databases.
+
+**2. MySQL:**
+
+MySQL is a popular open-source relational database management system (RDBMS) that is developed, distributed and supported by Oracle Corporation. MySQL stores data in tables and uses structured query language (SQL) for database access. It uses Structured Query Language SQL to access and transfer the data and commands such as 'SELECT', 'UPDATE', 'INSERT' and 'DELETE' to manage it.
+
+Related information is stored in different tables but the concept of JOIN operations simplifies the process of correlating it and performing queries across multiple tables and minimize the chances of data duplication. It follows the ACID (Atomic, Consistent, Isolated and Durable) model. This means that once a transaction is complete, the data remains consistent and stable on the disc which may include distinct multiple memory locations.
+
+**Pros:**
+
+* SQL databases are table based databases.
+* Data store in rows and columns
+* Each row contains a unique instance of data for the categories defined by the columns.
+* Provide facility primary key, to uniquely identify the rows.
+
+**Cons:**
+
+* Users have to scale relational database on powerful servers that are expensive and difficult to handle. To scale relational database, it has to be distributed on to multiple servers. Handling tables across different servers is difficult.
+* In SQL server\'s data has to fit into tables anyhow. If your data doesn\'t fit into tables, then you need to design your database structure that will be complex and again difficult to handle.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How MongoDB supports ACID transactions and locking functionalities?
+
+ACID stands that any update is:
+
+* **Atomic:** it either fully completes or it does not
+* **Consistent:** no reader will see a "partially applied" update
+* **Isolated:** no reader will see a "dirty" read
+* **Durable:** (with the appropriate write concern)
+
+MongoDB, has always supported ACID transactions in a single document and, when leveraging the document model appropriately, many applications don\'t need ACID guarantees across multiple documents.
+
+MongoDB is a document based  NoSQL database with a flexible schema. Transactions are not operations that should be executed for every write operation  since they incur a greater performance cost over a single document writes. With a document based structure and denormalized data model, there will be a minimized need for transactions. Since MongoDB allows document embedding, you don\'t necessarily need to use a transaction to meet a write operation.
+
+MongoDB version 4.0 provides **multi-document transaction** support for replica set deployments only and probably the version 4.2 will extend support for sharded deployments.
+
+**Example:** Multi-Document ACID Transactions in MongoDB
+
+These are multi-statement operations that need to be executed sequentially without affecting each other. For example below we can create two transactions, one to add a user and another to update a user with a field of age. 
+
+```js
+$session.startTransaction()
+
+   db.users.insert({_id: 6, name: "John"})
+
+   db.users.updateOne({_id: 3, {$set: {age:26} }})
+
+session.commit_transaction()
+```
+
+Transactions can be applied to operations against multiple documents contained in one or many collection/database. Any changes due to document transaction do not impact performance for workloads not related or do not require them. Until the transaction is committed, uncommitted writes are neither replicated to the secondary nodes nor are they readable outside the transactions.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What are the best practices for MongoDB Transactions?
+
+The multi-document transactions are only supported in the `WiredTiger` storage engine. For a single ACID transaction, if you try performing an excessive number of operations, it can result in high pressure on the WiredTiger cache. The cache is always dictated to maintain state for all subsequent writes since the oldest snapshot was created. This means new writes will accumulate in the cache throughout the duration of the transaction and will be flushed only after transactions currently running on old snapshots are committed or aborted.
+
+For the best database performance on the transaction, developers should consider:
+
+1. Always modify a small number of documents in a transaction. Otherwise, you will need to break the transaction into different parts and process the documents in different batches. At most, process 1000 documents at a time.
+
+2. Temporary exceptions such as awaiting to elect primary and transient network hiccups may result in abortion of the transaction. Developers should establish a logic to retry the transaction if the defined errors are presented.
+
+3. Configure optimal duration for the execution of the transaction from the default 60 seconds provided by MongoDB. Besides, employ indexing so that it can allow fast data access within the transaction.
+
+4. Decompose your transaction into a small set of operation so that it fits the 16MB size constraints. Otherwise, if the operation together with oplog description exceed this limit, the transaction will be aborted.
+
+5. All data relating to an entity should be stored in a single, rich document structure. This is to reduce the number of documents that are to be cached when different fields are going to be changed.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. Explain limitations of MongoDB Transactions?
+
+MongoDB transactions can exist only for relatively short time periods.  By default, a transaction must span no more than one minute of clock time.  This limitation results from the underlying MongoDB implementation. MongoDB uses MVCC, but unlike databases such as Oracle, the “older” versions of data are kept only in memory.
+
+1. You cannot create or drop a collection inside a transaction.
+2. Transactions cannot make writes to a capped collection
+3. Transactions take plenty of time to execute and somehow they can slow the performance of the database.
+4. Transaction size is limited to 16MB requiring one to split any that tends to exceed this size into smaller transactions.
+5. Subjecting a large number of documents to a transaction may exert excessive pressure on the WiredTiger engine and since it relies on the snapshot capability, there will be a retention of large unflushed operations in memory. This renders some performance cost on the database.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. Should I normalize my data before storing it in MongoDB?
+
+Data used by multiple documents can either be embedded (denormalized) or referenced (normalized). Normalization, which is increasing the complexity of the schema by splitting tables into multiple smaller ones to reduce the data redundancy( 1NF, 2NF, 3NF).
+
+But Mongo follows the exact opposite way of what we do with SQL. In MongoDB, data normalization is not requried. Indeed we need to de-normalize and fit it into a collection of multiple documents.
+
+**Example:** Let\'s say we have three tables
+
+* Table - 1 : ColumnA, ColumnB (primary key)
+* Table - 2 : ColumnC (Foreign key), ColumnD (primary key)
+* Table - 3 : ColumnE (foreign key), ColumnF
+
+In this case, mongoDB document structure should be as follows.
+
+```js
+{
+    ColumnA : ValueA,
+    ColumnB : ValueB,
+    Subset1 : [{
+       ColumnC : ValueC,
+       ColumnD : ValueD,
+       Subset2 : [{
+           ColumnE : ValueE,
+           ColumnF : ValueF
+       }]
+    }]
+}
+```
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is upsert operation in MongoDB?
+
+Upsert operation in MongoDB is utilized to save document into collection. If document matches query criteria then it will perform update operation otherwise it will insert a new document into collection.
+
+Upsert operation is useful while importing data from external source which will update existing documents if matched otherwise it will insert new documents into collection.
+
+**Example:** Upsert option set for update
+
+This operation first searches for the document if not present then inserts the new document into the database.
+
+```js
+
+> db.car.update(
+...    { name: "Qualis" },
+...    {
+...       name: "Qualis",
+...       speed: 50
+...    },
+...    { upsert: true }
+... )
+WriteResult({
+	"nMatched" : 0,
+	"nUpserted" : 1,
+	"nModified" : 0,
+	"_id" : ObjectId("548d3a955a5072e76925dc1c")
+})
+```
+
+The car with the name Qualis is checked for existence and if not, a document with car name "Qualis" and speed 50 is inserted into the database. The nUpserted with value "1" indicates a new document is inserted.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. Is there an "upsert" option in the mongodb insert command?
+
+The `db.collection.insert()` provides no upsert possibility. Instead, mongo insert inserts a new document into a collection. Upsert is only possible using `db.collection.update()` and `db.collection.save()`.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is oplog?
+
+The OpLog (Operations Log) is a special capped collection that keeps a rolling record of all operations that modify the data stored in databases.
+
+MongoDB applies database operations on the primary and then records the operations on the primary\'s oplog. The secondary members then copy and apply these operations in an asynchronous process. All replica set members contain a copy of the oplog, in the **local.oplog.rs** collection, which allows them to maintain the current state of the database.
+
+Each operation in the oplog is idempotent. That is, oplog operations produce the same results whether applied once or multiple times to the target dataset.
+
+**Example:** Querying The OpLog
+
+```js
+MongoDB shell version: 2.0.4
+connecting to: mongodb:27017/test
+PRIMARY> use local
+PRIMARY> db.oplog.rs.find()
+```
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. Does MongoDB pushes the writes to disk immediately or lazily?
+
+MongoDB pushes the data to disk lazily. It updates the immediately written to the journal but writing the data from journal to disk happens lazily.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How to perform a delete operation in MongoDB?
+
+MongoDB\'s `db.collection.deleteMany()` and `db.collection.deleteOne()` method is used to delete documents from the collection. Delete operations do not drop indexes, even if deleting all documents from a collection. All write operations in MongoDB are atomic on the level of a single document.
+
+**Example:**
+
+```js
+// Create Inventory Collection
+db.inventory.insertMany( [
+   { item: "journal", qty: 25, size: { h: 14, w: 21, uom: "cm" }, status: "A" },
+   { item: "notebook", qty: 50, size: { h: 8.5, w: 11, uom: "in" }, status: "P" },
+   { item: "paper", qty: 100, size: { h: 8.5, w: 11, uom: "in" }, status: "D" },
+   { item: "planner", qty: 75, size: { h: 22.85, w: 30, uom: "cm" }, status: "D" },
+   { item: "postcard", qty: 45, size: { h: 10, w: 15.25, uom: "cm" }, status: "A" },
+] );
+
+
+
+// Delete Commands
+db.inventory.deleteMany({}) // Delete All Documents
+
+db.inventory.deleteMany({ status : "A" }) // Delete All Documents that Match a Condition
+
+db.inventory.deleteOne( { status: "D" } ) // Delete Only One Document that Matches a Condition
+```
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>

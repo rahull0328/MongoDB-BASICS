@@ -939,3 +939,125 @@ db.inventory.deleteOne( { status: "D" } ) // Delete Only One Document that Match
 <div align="right">
     <b><a href="#">↥ back to top</a></b>
 </div>
+
+## Q. If you remove a document from database, does MongoDB remove it from disk?
+
+Yes. If you remove a document from database, MongoDB will remove it from disk too.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. Explain the structure of ObjectID in MongoDB?
+
+The **ObjectId(`<hexadecimal>`)** class is the default primary key for a MongoDB document and is usually found in the `_id` field in an inserted document. It returns a new ObjectId value. The 12-byte ObjectId value consists of:
+
+* a 4-byte timestamp value, representing the ObjectId\'s creation, measured in seconds since the Unix epoch
+* a 5-byte random value
+* a 3-byte incrementing counter, initialized to a random value
+
+<p align="center">
+  <img src="assets/objectid.png" alt="Document Databases" />
+</p>
+
+While the BSON format itself is little-endian, the timestamp and counter values are big-endian, with the most significant bytes appearing first in the byte sequence.
+
+**Create ObjectId:**
+
+To create a new objectID manually within the MongoDB we can declare `objectId()` as a method.
+
+```js
+> newObjectId = ObjectId();
+
+// Output
+ObjectId("5349b4ddd2781d08c09890f3")
+```
+
+**MongoDB provides three methods for ObjectId:**
+
+|  Method               |Description             |
+|-----------------------|------------------------|
+|ObjectId.getTimestamp()|Returns the timestamp portion of the object as a Date.|
+|ObjectId.toString()    |Returns the JavaScript representation in the form of a string literal "ObjectId(...)".|
+|ObjectId.valueOf()     |Returns the representation of the object as a hexadecimal string.|
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is a covered query in MongoDB?
+
+The MongoDB covered query is one which uses an index and does not have to examine any documents. An index will cover a query if it satisfies the following conditions:
+
+* All fields in a query are part of an index.
+* All fields returned in the results are of the same index.
+* No fields in the query are equal to null
+
+Since all the fields present in the query are part of an index, MongoDB matches the query conditions and returns the result using the same index without actually looking inside the documents.
+
+**Example:**
+
+A collection inventory has the following index on the type and item fields:
+
+```js
+db.inventory.createIndex( { type: 1, item: 1 } )
+```
+
+This index will cover the following operation which queries on the type and item fields and returns only the item field:
+
+```js
+db.inventory.find(
+   { type: "food", item:/^c/ },
+   { item: 1, _id: 0 }
+)
+```
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. Why MongoDB is not preferred over a 32-bit system?
+
+When running a 32-bit system build of MongoDB, the total storage size for the server, including data and indexes, is 2 gigabytes. The reason for this is that the MongoDB storage engine uses memory-mapped files for performance.
+
+If you are running a 64-bit build of MongoDB, there is virtually no limit to storage size.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. Can one MongoDB operation lock more than one database?
+
+Yes. Operations like `db.copyDatabase()`, `db.repairDatabase()`, etc. can lock more than one databases involved.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is Sharding in MongoDB?
+
+**Sharding** is a method for distributing data across multiple machines. MongoDB uses sharding to support deployments with very large data sets and high throughput operations.
+
+Database systems with large data sets or high throughput applications can challenge the capacity of a single server. For example, high query rates can exhaust the CPU capacity of the server. Working set sizes larger than the system\'s RAM stress the I/O capacity of disk drives. There are two methods for addressing system growth: vertical and horizontal scaling.
+
+**1. Vertical Scaling:**
+
+Vertical Scaling involves increasing the capacity of a single server, such as using a more powerful CPU, adding more RAM, or increasing the amount of storage space.
+
+**2. Horizontal Scaling:**
+
+Horizontal Scaling involves dividing the system dataset and load over multiple servers, adding additional servers to increase capacity as required. While the overall speed or capacity of a single machine may not be high, each machine handles a subset of the overall workload, potentially providing better efficiency than a single high-speed high-capacity server.
+
+<p align="center">
+  <img src="assets/sharding.png" alt="Document Databases" width="400px" />
+</p>
+
+MongoDB supports horizontal scaling through `sharding`. A MongoDB sharded cluster consists of the following components:
+
+* **Shards**: Each shard contains a subset of the sharded data. Each shard can be deployed as a replica set.
+* **Mongos**: The mongos acts as a query router, providing an interface between client applications and the sharded  cluster. Starting in MongoDB 4.4, mongos can support hedged reads to minimize latencies.
+* **Config Servers**: Config servers store metadata and configuration settings for the cluster.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>

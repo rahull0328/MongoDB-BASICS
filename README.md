@@ -1117,3 +1117,240 @@ MongoDB preallocates data files to reserve space and avoid file system fragmenta
 <div align="right">
     <b><a href="#">↥ back to top</a></b>
 </div>
+
+## Q. What is the MongoDB Profiler?
+
+The MongoDB Profiler is a tool that collects detailed information about database operations, such as queries, updates, and commands, that take longer than a specified threshold to execute. It helps in identifying slow queries and optimizing database performance.
+
+To enable profiling, you can use the `db.setProfilingLevel()` method. For example:
+
+```js
+db.setProfilingLevel(2, { slowms: 100 });
+```
+
+This sets the profiling level to 2 (profile all operations) and logs operations slower than 100 milliseconds. The profiled data is stored in the `system.profile` collection.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How does MongoDB handle schema validation?
+
+MongoDB supports schema validation to enforce data integrity and structure on collections. You can define validation rules using JSON Schema or query expressions in the `validator` option when creating or modifying a collection.
+
+**Example:**
+
+```js
+db.createCollection("students", {
+   validator: {
+      $jsonSchema: {
+         bsonType: "object",
+         required: ["name", "age"],
+         properties: {
+            name: { bsonType: "string" },
+            age: { bsonType: "int", minimum: 0, maximum: 120 }
+         }
+      }
+   }
+});
+```
+
+This ensures that documents in the "students" collection must have "name" and "age" fields with specified types and constraints. Validation can be set to "strict" (default), "moderate", or "off".
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What are Capped Collections in MongoDB?
+
+Capped collections are fixed-size collections that maintain insertion order and automatically remove the oldest documents when the collection reaches its maximum size. They are useful for logging, caching, or storing time-series data where only recent entries are relevant.
+
+**Key Features:**
+
+* Fixed size in bytes or number of documents.
+* Automatic removal of oldest documents (FIFO).
+* High-performance inserts and reads.
+* No support for updates that increase document size.
+
+**Example:**
+
+```js
+db.createCollection("logs", { capped: true, size: 100000, max: 100 });
+```
+
+This creates a capped collection "logs" with a maximum size of 100,000 bytes and up to 100 documents.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is GridFS in MongoDB?
+
+GridFS is a specification for storing and retrieving large files (e.g., images, videos, audio) in MongoDB. It divides files into chunks and stores them in two collections: `fs.files` (metadata) and `fs.chunks` (data chunks). This allows MongoDB to handle files larger than the 16MB BSON document limit.
+
+**Example:**
+
+```js
+const fs = require('fs');
+const mongo = require('mongodb');
+const Grid = require('gridfs-stream');
+
+const db = ...; // MongoDB connection
+const gfs = Grid(db, mongo);
+
+const writestream = gfs.createWriteStream({
+   filename: 'largefile.mp4'
+});
+fs.createReadStream('/path/to/largefile.mp4').pipe(writestream);
+```
+
+GridFS is ideal for storing large binary data while leveraging MongoDB's replication and sharding.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How to perform text search in MongoDB?
+
+MongoDB supports text search using text indexes, which allow for efficient searching of string content in documents. You can create a text index on fields containing text and use the `$text` operator for queries.
+
+**Example:**
+
+```js
+// Create text index
+db.articles.createIndex({ title: "text", content: "text" });
+
+// Search query
+db.articles.find({ $text: { $search: "MongoDB tutorial" } });
+```
+
+Text search supports features like stemming, stop words, and relevance scoring. For advanced needs, consider integrating with Elasticsearch.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What are the differences between MongoDB and Cassandra?
+
+MongoDB and Cassandra are both NoSQL databases but differ in architecture and use cases:
+
+* **Data Model:** MongoDB uses a document model (BSON), while Cassandra uses a wide-column store.
+* **Consistency:** MongoDB offers strong consistency with tunable options; Cassandra prioritizes availability and partition tolerance (AP in CAP theorem).
+* **Query Language:** MongoDB uses a rich query language; Cassandra uses CQL (similar to SQL).
+* **Scalability:** Both scale horizontally, but Cassandra excels in write-heavy workloads with linear scalability.
+* **Use Cases:** MongoDB for applications needing complex queries and transactions; Cassandra for time-series data, IoT, and high-write scenarios.
+
+Choose based on your specific requirements for consistency, query complexity, and data volume.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How to backup and restore MongoDB databases?
+
+MongoDB provides tools like `mongodump` and `mongorestore` for backups.
+
+**Backup:**
+
+```bash
+mongodump --db mydb --out /path/to/backup
+```
+
+This creates a binary export of the database.
+
+**Restore:**
+
+```bash
+mongorestore --db mydb /path/to/backup/mydb
+```
+
+For production, use MongoDB Atlas for automated backups or set up replica sets for point-in-time recovery. Always test restores in a staging environment.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What are the security features in MongoDB?
+
+MongoDB offers several security features:
+
+* **Authentication:** Supports SCRAM, LDAP, Kerberos, and x.509 certificates.
+* **Authorization:** Role-based access control (RBAC) with built-in roles.
+* **Encryption:** At-rest encryption using WiredTiger and in-transit via TLS/SSL.
+* **Auditing:** Logs database activities for compliance.
+* **Network Security:** Bind to specific IPs and use firewalls.
+
+**Example:** Enable authentication and create a user:
+
+```js
+db.createUser({
+   user: "admin",
+   pwd: "password",
+   roles: ["userAdminAnyDatabase"]
+});
+```
+
+Regular security audits and updates are recommended.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. How does MongoDB support geospatial queries?
+
+MongoDB supports geospatial queries using 2dsphere and 2d indexes for location-based data. You can store coordinates as GeoJSON objects and query for proximity, intersections, etc.
+
+**Example:**
+
+```js
+// Insert document with location
+db.places.insert({
+   name: "Central Park",
+   location: { type: "Point", coordinates: [-73.97, 40.77] }
+});
+
+// Create 2dsphere index
+db.places.createIndex({ location: "2dsphere" });
+
+// Query nearby places
+db.places.find({
+   location: {
+      $near: {
+         $geometry: { type: "Point", coordinates: [-73.97, 40.77] },
+         $maxDistance: 1000
+      }
+   }
+});
+```
+
+This enables efficient location-based searches for applications like mapping or delivery services.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
+
+## Q. What is the MongoDB Query Language (MQL)?
+
+MQL is MongoDB's query language for interacting with data. It uses JSON-like syntax for CRUD operations, aggregations, and advanced queries. Unlike SQL, it's designed for document databases.
+
+**Example:**
+
+```js
+// Find documents
+db.collection.find({ status: "active" });
+
+// Update documents
+db.collection.updateOne({ _id: 1 }, { $set: { status: "inactive" } });
+
+// Aggregate data
+db.collection.aggregate([
+   { $match: { category: "electronics" } },
+   { $group: { _id: "$brand", count: { $sum: 1 } } }
+]);
+```
+
+MQL is intuitive for developers familiar with JavaScript and supports complex operations efficiently.
+
+<div align="right">
+    <b><a href="#">↥ back to top</a></b>
+</div>
